@@ -24,7 +24,9 @@ module.exports = (db) => {
     if (match.stage === 'group') {
       points = scoreGroupPrediction({ pred_home, pred_away }, match);
     } else {
-      points = scoreKnockoutPrediction({ pred_winner }, match, match.stage);
+      // scoreKnockoutPrediction needs the full array of stage matches (team-name rule)
+      const stageMatches = db.data.matches.filter(m => m.stage === match.stage);
+      points = scoreKnockoutPrediction({ pred_winner }, stageMatches, match.stage);
     }
 
     const existing = db.data.predictions.find(p => p.user_id === user_id && p.match_id === match_id);

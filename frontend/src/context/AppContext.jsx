@@ -63,26 +63,36 @@ export function AppProvider({ children }) {
 
   const savePrediction = async (matchId, predHome, predAway, predWinner) => {
     if (!currentUser) return;
-    const res = await fetch('/api/predictions', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        user_id: currentUser.id,
-        match_id: matchId,
-        pred_home: predHome,
-        pred_away: predAway,
-        pred_winner: predWinner,
-      }),
-    });
-    const data = await res.json();
-    if (data.success) {
-      setPredictions(prev => ({
-        ...prev,
-        [matchId]: { ...prev[matchId], match_id: matchId, pred_home: predHome, pred_away: predAway, pred_winner: predWinner },
-      }));
-      fetchAll(); // refresh leaderboard
+    try {
+      const res = await fetch('/api/predictions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user_id: currentUser.id,
+          match_id: matchId,
+          pred_home: predHome,
+          pred_away: predAway,
+          pred_winner: predWinner,
+        }),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        console.error('Save prediction failed:', res.status, text);
+        return { success: false, error: text };
+      }
+      const data = await res.json();
+      if (data.success) {
+        setPredictions(prev => ({
+          ...prev,
+          [matchId]: { ...prev[matchId], match_id: matchId, pred_home: predHome, pred_away: predAway, pred_winner: predWinner },
+        }));
+        fetchAll(); // refresh leaderboard
+      }
+      return data;
+    } catch (e) {
+      console.error('savePrediction error:', e);
+      return { success: false, error: e.message };
     }
-    return data;
   };
 
   const saveBulkPredictions = async (preds) => {

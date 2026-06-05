@@ -39,9 +39,13 @@ const QFY = [
 const SFY = centerY(QFY[0], QFY[1]); // = centerY(86,338) = (86+338+50)/2-25 = 237-25 = 212
 const TOTAL_H = R32Y[7] + SH;        // 424 + 50 = 474
 
-// Final vertically centered
-const FINAL_Y  = Math.round((TOTAL_H - SH) / 2); // 212
-const THIRD_Y  = FINAL_Y + SH + 12;
+// Final / 3rd slots are taller because they contain a label header (~12px)
+// plus two team rows (~24px each) + divider = ~62px total
+const LABELED_SH = 64;
+
+// Final vertically centered (use LABELED_SH so it's truly centered)
+const FINAL_Y  = Math.round((TOTAL_H - LABELED_SH) / 2); // ≈ 205
+const THIRD_Y  = FINAL_Y + LABELED_SH + 10;              // gap below Final
 
 // ── X positions ───────────────────────────────────────────────────────────────
 // Left: R32@0, R16@142, QF@284, SF@426
@@ -165,31 +169,34 @@ function rightPaths() {
 
 // ── Match slot component ──────────────────────────────────────────────────────
 function MatchSlot({ matchId, home, away, userPick, realWinner, onPick, label, highlight }) {
-  const teamsKnown = home && away;
+  const pos = POSITIONS[matchId];
+  if (!pos) return null; // safety guard for unknown match IDs
 
+  const teamsKnown = !!(home && away);
+  const slotH = label ? LABELED_SH : SH;
+
+  // TeamRow uses flex-1 so it always fills available space regardless of label
   function TeamRow({ team }) {
     if (!team) {
       return (
-        <div className="px-2 py-1.5 flex items-center text-gray-300 text-xs italic" style={{ height: SH / 2 }}>
+        <div className="flex-1 flex items-center px-2 text-gray-300 text-xs italic min-h-[22px]">
           TBD
         </div>
       );
     }
-    const isRealWin  = realWinner === team;
-    const isPicked   = userPick   === team;
+    const isRealWin = realWinner === team;
+    const isPicked  = userPick   === team;
     return (
       <button
         onClick={() => teamsKnown && onPick?.(matchId, team)}
-        className={`w-full flex items-center gap-1 px-1.5 text-left transition-all text-xs font-medium
-          ${isRealWin  ? 'bg-green-50 text-green-700 font-bold' :
-            isPicked   ? 'text-white font-bold' :
-                         'text-gray-700 hover:bg-gray-50'}
-        `}
+        className={`flex-1 flex items-center gap-1 px-1.5 min-h-[22px] w-full text-left transition-all text-xs font-medium
+          ${isRealWin ? 'bg-green-50 text-green-700 font-bold' :
+            isPicked  ? 'text-white font-bold' :
+                        'text-gray-700 hover:bg-gray-50'}`}
         style={{
-          height: SH / 2,
           background: isPicked && !isRealWin ? 'linear-gradient(135deg,#7B1D2E,#4A1060)' : undefined,
         }}
-        title={`Pick ${team}`}
+        title={team ? `Pick ${team}` : undefined}
       >
         <TeamName name={team} size={11} className="truncate" />
       </button>
@@ -198,26 +205,26 @@ function MatchSlot({ matchId, home, away, userPick, realWinner, onPick, label, h
 
   return (
     <div
-      className={`absolute overflow-hidden rounded border shadow-sm bg-white`}
+      className="absolute overflow-hidden rounded border shadow-sm bg-white flex flex-col"
       style={{
-        left: POSITIONS[matchId].x,
-        top:  POSITIONS[matchId].y,
+        left: pos.x,
+        top:  pos.y,
         width: SW,
-        height: SH,
+        minHeight: slotH,
         borderColor: highlight ? '#7B1D2E' : '#e5e7eb',
         borderWidth: highlight ? 2 : 1,
       }}
     >
       {label && (
         <div
-          className="text-white text-center leading-none font-bold"
+          className="text-white text-center leading-none font-bold flex-shrink-0"
           style={{ fontSize: 8, padding: '2px 0', background: 'linear-gradient(135deg,#7B1D2E,#4A1060)' }}
         >
           {label}
         </div>
       )}
       <TeamRow team={home} />
-      <div className="border-t border-gray-100" />
+      <div className="border-t border-gray-100 flex-shrink-0" />
       <TeamRow team={away} />
     </div>
   );
@@ -268,7 +275,7 @@ export default function BracketView({ knockoutMatches, teamsFor, predictions, on
       </div>
 
       {/* Main bracket */}
-      <div className="relative" style={{ width: TOTAL_W, minWidth: TOTAL_W, height: TOTAL_H + 20 }}>
+      <div className="relative" style={{ width: TOTAL_W, minWidth: TOTAL_W, height: Math.max(TOTAL_H, THIRD_Y + LABELED_SH) + 20 }}>
         {/* SVG connector lines */}
         <svg
           style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'visible' }}
@@ -309,13 +316,6 @@ export default function BracketView({ knockoutMatches, teamsFor, predictions, on
           );
         })}
 
-        {/* "3rd Place" label line */}
-        <div
-          className="absolute text-xs text-center text-gray-400 italic"
-          style={{ left: FINAL_X, top: THIRD_Y - 10, width: SW }}
-        >
-          3rd Place
-        </div>
       </div>
     </div>
   );
