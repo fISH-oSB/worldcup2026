@@ -1,0 +1,81 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --fifa-red:    #7B1D2E;
+    --fifa-purple: #4A1060;
+    --fifa-blue:   #0A2E6E;
+    --fifa-teal:   #007A6E;
+    --fifa-green:  #00A551;
+    --fifa-yellow: #C9E820;
+    --fifa-orange: #F47B20;
+  }
+  body {
+    @apply bg-gray-50 text-gray-900 min-h-screen;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply px-4 py-2 rounded-lg font-semibold text-white transition-colors disabled:opacity-40 disabled:cursor-not-allowed;
+    background: linear-gradient(135deg, var(--fifa-red), var(--fifa-purple));
+  }
+  .btn-primary:hover:not(:disabled) {
+    opacity: 0.88;
+  }
+  .btn-secondary {
+    @apply bg-gray-200 text-gray-800 px-4 py-2 rounded-lg font-semibold hover:bg-gray-300 transition-colors;
+  }
+  .btn-green {
+    @apply bg-[#00A551] text-white px-4 py-2 rounded-lg font-semibold hover:bg-green-700 transition-colors;
+  }
+  .card {
+    @apply bg-white rounded-xl shadow-sm border border-gray-100 p-4;
+  }
+  .score-input {
+    @apply w-12 text-center text-lg font-bold border-2 border-gray-300 rounded-lg p-1 focus:outline-none transition-colors;
+  }
+  .score-input:focus {
+    border-color: var(--fifa-red);
+  }
+}
+
+/* ── Goal animation ─────────────────────────────────────────────────────── */
+@keyframes goalFloat {
+  0%   { opacity: 1; transform: translateY(0) scale(1); }
+  60%  { opacity: 1; transform: translateY(-28px) scale(1.2); }
+  100% { opacity: 0; transform: translateY(-48px) scale(0.9); }
+}
+.goal-pop {
+  position: absolute;
+  pointer-events: none;
+  font-weight: 900;
+  font-size: 1.1rem;
+  color: var(--fifa-red);
+  animation: goalFloat 0.9s ease-out forwards;
+  z-index: 50;
+  white-space: nowrap;
+}
+
+/* ── FIFA 2026 rainbow header bar ───────────────────────────────────────── */
+.fifa-gradient {
+  background: linear-gradient(90deg,
+    #7B1D2E 0%, #D62828 10%,
+    #F47B20 20%, #C9E820 30%,
+    #00A551 40%, #007A6E 50%,
+    #0A2E6E 60%, #4A1060 70%,
+    #7B1D2E 80%, #D62828 90%, #F47B20 100%
+  );
+}
+
+/* ── password gate shake ────────────────────────────────────────────────── */
+@keyframes shake {
+  0%,100%{ transform:translateX(0) }
+  20%{ transform:translateX(-8px) }
+  40%{ transform:translateX(8px) }
+  60%{ transform:translateX(-5px) }
+  80%{ transform:translateX(5px) }
+}
+.animate-shake { animation: shake 0.5s ease-in-out; }
