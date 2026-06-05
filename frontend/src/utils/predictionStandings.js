@@ -79,22 +79,22 @@ export function buildFlowingBracket(knockoutMatches, predictions, predR32TeamMap
   const matchMap = {};
   knockoutMatches.forEach(m => { matchMap[m.id] = m; });
 
-  // For a given match, return the user's predicted winner (or real winner if finished)
+  // Always return the user's own predicted winner — never the official result.
+  // Each person's bracket is purely their own predictions end-to-end.
   function getPickedWinner(matchId) {
-    const m = matchMap[matchId];
-    if (m?.status === 'finished' && m.winner) return m.winner;
     return predictions[matchId]?.pred_winner ?? null;
   }
 
   // Teams for each match (what two teams play)
   const teamsFor = {};
 
-  // R32: use group-stage predicted standings
+  // R32: always use the personal predicted standings — ignore official home_team/away_team
+  // so each user sees their own group-stage predictions reflected in the bracket.
   knockoutMatches.filter(m => m.stage === 'r32').forEach(m => {
     const pred = predR32TeamMap?.[m.id];
     teamsFor[m.id] = {
-      home: m.home_team ?? pred?.home ?? null,
-      away: m.away_team ?? pred?.away ?? null,
+      home: pred?.home ?? null,
+      away: pred?.away ?? null,
     };
   });
 
@@ -165,11 +165,12 @@ export function buildPredictedBracket(knockoutMatches, allPredStandings) {
 
   const teamMap = {};
   knockoutMatches.filter(m => m.stage === 'r32').forEach(m => {
+    // Always resolve from predicted standings — never use the official home_team/away_team
     teamMap[m.id] = {
-      home: m.home_team ?? resolveSlot(m.home_slot, m.id),
-      away: m.away_team ?? (m.away_slot === '3rd *'
+      home: resolveSlot(m.home_slot, m.id),
+      away: m.away_slot === '3rd *'
         ? resolveSlot('3rd *', m.id)
-        : resolveSlot(m.away_slot, m.id)),
+        : resolveSlot(m.away_slot, m.id),
     };
   });
 
