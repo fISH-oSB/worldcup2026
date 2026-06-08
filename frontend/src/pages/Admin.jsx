@@ -163,15 +163,35 @@ export default function Admin() {
         <button onClick={() => setAuthed(false)} className="btn-secondary text-sm">Sign Out</button>
       </div>
 
-      {/* Tab navigation */}
-      <div className="flex gap-1.5 mb-5">
-        {[['sync','🔄 Auto-Sync'], ['bracket','🏆 Bracket'], ['manual','✏️ Manual Entry']].map(([k, l]) => (
-          <button key={k} onClick={() => setActiveTab(k)}
-            className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
-              activeTab === k ? 'bg-[#003087] text-white' : 'bg-white border border-gray-200 text-gray-700 hover:border-blue-300'
-            }`}
-          >{l}</button>
-        ))}
+      {/* Tab navigation + export button */}
+      <div className="flex flex-wrap gap-1.5 mb-5 items-center justify-between">
+        <div className="flex gap-1.5">
+          {[['sync','🔄 Auto-Sync'], ['bracket','🏆 Bracket'], ['manual','✏️ Manual Entry']].map(([k, l]) => (
+            <button key={k} onClick={() => setActiveTab(k)}
+              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                activeTab === k ? 'bg-[#003087] text-white' : 'bg-white border border-gray-200 text-gray-700 hover:border-blue-300'
+              }`}
+            >{l}</button>
+          ))}
+        </div>
+        <a
+          href={`/api/admin/export-excel`}
+          onClick={e => {
+            e.preventDefault();
+            const url = `/api/admin/export-excel`;
+            fetch(url, { headers: { 'x-admin-password': password } })
+              .then(r => r.blob())
+              .then(blob => {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `predictions-backup-${new Date().toISOString().slice(0,10)}.xlsx`;
+                a.click();
+              });
+          }}
+          className="btn-secondary text-sm flex items-center gap-1.5"
+        >
+          📥 Export Excel Backup
+        </a>
       </div>
 
       {/* ── SYNC TAB ── */}

@@ -17,9 +17,18 @@ async function initDB() {
   // Default structure
   db.data ||= { users: [], matches: [], predictions: [], _nextPredId: 1 };
 
-  // Seed users
+  // Seed users on first run; on subsequent runs only ADD new names (never remove or reset)
   if (db.data.users.length === 0) {
     db.data.users = USERS.map((name, i) => ({ id: i + 1, name }));
+  } else {
+    const existingNames = new Set(db.data.users.map(u => u.name));
+    const maxId = db.data.users.reduce((m, u) => Math.max(m, u.id), 0);
+    let nextId = maxId + 1;
+    USERS.forEach(name => {
+      if (!existingNames.has(name)) {
+        db.data.users.push({ id: nextId++, name });
+      }
+    });
   }
 
   // Seed matches

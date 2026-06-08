@@ -5,7 +5,7 @@ import { useApp } from '../context/AppContext';
 const AVATAR_COLORS = [
   'bg-red-500', 'bg-blue-600', 'bg-green-600', 'bg-yellow-500',
   'bg-purple-600', 'bg-pink-500', 'bg-indigo-600', 'bg-orange-500',
-  'bg-teal-600', 'bg-cyan-600',
+  'bg-teal-600', 'bg-cyan-600', 'bg-lime-600', 'bg-rose-600',
 ];
 
 function userColor(name) {
@@ -61,9 +61,10 @@ export default function Home() {
         <div className="grid grid-cols-2 gap-3">
           {users.map(user => {
             const isActive = currentUser?.id === user.id;
-            const pts = lbMap[user.id]?.total_points ?? 0;
-            const rank = lbMap[user.id]?.rank ?? '—';
-            const color = userColor(user.name);
+            const pts      = lbMap[user.id]?.total_points ?? 0;
+            const rank     = lbMap[user.id]?.rank ?? '—';
+            const hasPreds = (lbMap[user.id]?.pred_count ?? 0) > 0;
+            const color    = userColor(user.name);
             return (
               <button
                 key={user.id}
@@ -80,7 +81,11 @@ export default function Home() {
                 <div className="min-w-0">
                   <div className="font-semibold truncate">{user.name}</div>
                   <div className="text-xs text-gray-500">
-                    {pts > 0 ? `${pts} pts · #${rank}` : 'No predictions yet'}
+                    {pts > 0
+                      ? `${pts} pts · #${rank}`
+                      : hasPreds
+                        ? <span className="text-green-600 font-semibold">Predictions made! ✓</span>
+                        : 'No predictions yet'}
                   </div>
                 </div>
                 {isActive && <span className="ml-auto text-[#003087] text-lg">✓</span>}

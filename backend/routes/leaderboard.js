@@ -18,6 +18,7 @@ module.exports = (db) => {
         id: user.id,
         name: user.name,
         total_points: total,
+        pred_count: preds.length,
         group_pts: pts('group'),
         r32_pts: pts('r32'),
         r16_pts: pts('r16'),

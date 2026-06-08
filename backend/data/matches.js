@@ -163,7 +163,7 @@ const KNOCKOUT_MATCHES = [
   { id: 104, stage: 'final', matchNum: 1, home_slot: 'W101', away_slot: 'W102', datetime: '2026-07-19T15:00:00-04:00', venue: 'New York / New Jersey' },
 ];
 
-const USERS = ['Kenz', 'Brad', 'Teani', 'Fischer', 'JB', 'Bet', 'Ellle', 'Senna (Chat GPT)', 'Nelson', 'Ferg (Claude)'];
+const USERS = ['Kenz', 'Brad', 'Teani', 'Fischer', 'JB', 'Bet', 'Ellle', 'Senna (Chat GPT)', 'Nelson', 'Ferg (Claude)', 'Paul', 'Junie (Gemini)'];
 
 // Points per correct knockout winner by stage
 const KNOCKOUT_POINTS = { r32: 2, r16: 4, qf: 6, sf: 8, third: 8, final: 10 };

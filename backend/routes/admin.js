@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const XLSX = require('xlsx');
 const { scoreGroupPrediction, scoreKnockoutPrediction } = require('../utils/scoring');
 const { calcGroupStandings, getBestThirdPlace } = require('../utils/standings');
 const { GROUPS } = require('../data/matches');
@@ -130,6 +131,64 @@ module.exports = (db) => {
     });
     await db.write();
     res.json({ success: true });
+  });
+
+  // Export all predictions as Excel (one sheet per user + summary)
+  router.get('/export-excel', requireAdmin, (req, res) => {
+    const users   = db.data.users;
+    const matches = db.data.matches;
+    const preds   = db.data.predictions;
+
+    const wb = XLSX.utils.book_new();
+
+    users.forEach(user => {
+      const userPreds = preds.filter(p => p.user_id === user.id);
+      const rows = matches.map(m => {
+        const p = userPreds.find(p => p.match_id === m.id);
+        return {
+          'Match ID':        m.id,
+          'Stage':           m.stage,
+          'Group':           m.group_name ?? '',
+          'Home Team':       m.home_team  ?? m.home_slot ?? '',
+          'Away Team':       m.away_team  ?? m.away_slot ?? '',
+          'Match Date':      m.datetime   ?? '',
+          'Venue':           m.venue      ?? '',
+          'Pred Home':       p?.pred_home  ?? '',
+          'Pred Away':       p?.pred_away  ?? '',
+          'Pred Winner':     p?.pred_winner ?? '',
+          'Points Earned':   p?.points     ?? '',
+          'Official Score':  m.home_score !== null ? `${m.home_score}-${m.away_score}` : '',
+          'Official Status': m.status     ?? '',
+        };
+      });
+      const ws = XLSX.utils.json_to_sheet(rows);
+      ws['!cols'] = [
+        {wch:8},{wch:8},{wch:6},{wch:22},{wch:22},
+        {wch:22},{wch:24},{wch:10},{wch:10},{wch:22},{wch:12},{wch:14},{wch:14},
+      ];
+      const sheetName = user.name.replace(/[:\\/?*[\]]/g, '').substring(0, 31);
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+    });
+
+    // Summary sheet
+    const summaryRows = users.map(u => {
+      const up = preds.filter(p => p.user_id === u.id);
+      return {
+        'Name': u.name,
+        'User ID': u.id,
+        'Predictions Made': up.length,
+        'Total Points': up.reduce((s, p) => s + (p.points || 0), 0),
+      };
+    }).sort((a, b) => b['Total Points'] - a['Total Points']);
+    const summaryWs = XLSX.utils.json_to_sheet(summaryRows);
+    summaryWs['!cols'] = [{wch:20},{wch:8},{wch:18},{wch:14}];
+    XLSX.utils.book_append_sheet(wb, summaryWs, 'Summary');
+
+    const date = new Date().toISOString().slice(0, 10);
+    const buf  = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' });
+    res.setHeader('Content-Disposition', `attachment; filename="predictions-backup-${date}.xlsx"`);
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.send(buf);
   });
 
   return router;
