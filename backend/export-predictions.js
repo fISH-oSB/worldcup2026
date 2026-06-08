@@ -8,7 +8,8 @@ const fs   = require('fs');
 const path = require('path');
 const XLSX = require('xlsx');
 
-const DB_PATH = path.join(__dirname, 'worldcup.json');
+const DATA_DIR = process.env.DATA_DIR || __dirname;
+const DB_PATH  = path.join(DATA_DIR, 'worldcup.json');
 if (!fs.existsSync(DB_PATH)) {
   console.error('worldcup.json not found — run the server at least once first.');
   process.exit(1);

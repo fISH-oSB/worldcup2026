@@ -3,7 +3,10 @@ const { Low, JSONFile } = require('lowdb');
 const path = require('path');
 const { GROUP_MATCHES, KNOCKOUT_MATCHES, USERS } = require('./data/matches');
 
-const DB_PATH = path.join(__dirname, 'worldcup.json');
+// DATA_DIR env var lets Railway (or any host) point to a persistent volume.
+// Locally it falls back to the backend/ folder as before.
+const DATA_DIR = process.env.DATA_DIR || __dirname;
+const DB_PATH  = path.join(DATA_DIR, 'worldcup.json');
 
 let _db = null;
 
