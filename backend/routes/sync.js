@@ -83,43 +83,42 @@ function applyResult(match, result, db) {
   return { id: match.id, home: match.home_team, away: match.away_team, homeScore, awayScore };
 }
 
+// ── Core sync function (shared by auto-sync and manual routes) ───────────────
+async function syncTodayAndYesterday(db) {
+  const today     = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+
+  const fmt     = d => d.toISOString().slice(0, 10).replace(/-/g, '');
+  const dates   = [fmt(yesterday), fmt(today)];
+  const updated = [];
+  const errors  = [];
+
+  for (const dateStr of dates) {
+    try {
+      const data   = await fetchESPN(dateStr);
+      const events = data.events || [];
+      for (const event of events) {
+        const result = parseESPNEvent(event);
+        if (!result) continue;
+        const match = findMatch(db.data.matches, result);
+        if (!match) continue;
+        updated.push(applyResult(match, result, db));
+      }
+    } catch (e) {
+      errors.push(`Date ${dateStr}: ${e.message}`);
+    }
+  }
+
+  if (updated.length > 0) await db.write();
+  return { updated, errors };
+}
+
 module.exports = (db) => {
   // Manual trigger: sync results for today (or a specified date range)
   router.post('/now', requireAdmin, async (req, res) => {
     try {
-      // Sync today + yesterday to catch late games
-      const today = new Date();
-      const yesterday = new Date(today);
-      yesterday.setDate(today.getDate() - 1);
-
-      const fmt = d => d.toISOString().slice(0, 10).replace(/-/g, '');
-      const dates = [fmt(yesterday), fmt(today)];
-
-      const updated = [];
-      const errors  = [];
-
-      for (const dateStr of dates) {
-        try {
-          const data = await fetchESPN(dateStr);
-          const events = data.events || [];
-
-          for (const event of events) {
-            const result = parseESPNEvent(event);
-            if (!result) continue;
-
-            const match = findMatch(db.data.matches, result);
-            if (!match) continue;
-
-            const info = applyResult(match, result, db);
-            updated.push(info);
-          }
-        } catch (e) {
-          errors.push(`Date ${dateStr}: ${e.message}`);
-        }
-      }
-
-      if (updated.length > 0) await db.write();
-
+      const { updated, errors } = await syncTodayAndYesterday(db);
       res.json({ success: true, updated, errors, message: `${updated.length} match(es) updated` });
     } catch (e) {
       res.status(500).json({ error: e.message });
@@ -181,3 +180,5 @@ module.exports = (db) => {
 
   return router;
 };
+
+module.exports.syncTodayAndYesterday = syncTodayAndYesterday;
